@@ -1,4 +1,4 @@
-const cloneFunction = (inObject) => {
+function cloneFunction(inObject) {
     let outObject, value, key
 
     if (typeof inObject !== "object" || inObject === null) {

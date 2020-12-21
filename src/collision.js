@@ -1,4 +1,4 @@
-function checkForNestedCollisions(filter) {
+function resolveNestedCollisions(filter) {
 
     // Separate the "is" and "in" nested filters
     const nestedIsFilters = filter.filters.filter((fil) => fil.type === 'is');
@@ -42,17 +42,20 @@ function checkForNestedCollisions(filter) {
             if (filterType === 'is') {
 
                 // We were able to resolve the duplicates
-                if ([...new Set(value)] == 1) {
-                    return [...new Set(value)];
+                if ([...new Set(value)].length == 1) {
+                    return {
+                        type: 'is',
+                        attribute,
+                        value: value[0]
+                    };
                 }
 
-                // There was no resolve the duplicates
-                return {
-                    type: 'false'
-                }
+                // There was no resolving the duplicates
+                return { type: 'false' }
             }
 
-            // For "in" filters, we can resolve the issue if, there's overlap between the two value list
+            // For "in" filters, we can resolve the issue
+            // Only if, there's overlap between the two value list
             if (filterType === 'in') {
 
                 // The values that are common to both lists
@@ -65,7 +68,7 @@ function checkForNestedCollisions(filter) {
                 });
 
                 // Our values were able to be consolidated down to an "is"
-                if (sharedValues.length > 0) {
+                if (sharedValues.length == 1) {
                     return {
                         type: 'is',
                         attribute,
@@ -73,16 +76,24 @@ function checkForNestedCollisions(filter) {
                     };
                 }
 
-                // Otherwise, no resolving the multiple "in" lists
-                return {
-                    type: 'false'
+                if (sharedValues.length > 1) {
+                    return {
+                        type: 'in',
+                        attribute,
+                        values: sharedValues
+                    };
                 }
+
+                // Otherwise, no resolving the multiple "in" lists
+                return { type: 'false' }
             }
         }
 
         // Otherwise, there was no need for a resolution
         return filter;
     }
+
+    return filter;
 };
 
-module.exports = checkForNestedCollisions;
+module.exports = resolveNestedCollisions;
