@@ -86,15 +86,30 @@ class Simplifier {
      */
     static simplifyAndFilter(filter) {
 
-        // Attempt to resolve any collisions involved with the nested filters
-        filter = checkForNestedCollisions(filter);
-
-        // After resolving collisions, let's simplify any remaining filters
+        // Simply any filters where possible
         if (filter.hasOwnProperty('filters')) {
+
+            // Flatten the nested sub-filters
+            const nestedAndFilters = filter.filters
+                .reduce((acc, val) => {
+
+                    if (val.type === 'and') {
+                        acc = [...acc, ...val.filters]
+                    }
+
+                    return acc;
+                }, [])
+
+            filter.filters = filter.filters.filter((fil) => fil.type !== 'and');
+            filter.filters = filter.filters.concat(nestedAndFilters);
+
             filter.filters = filter.filters.map((nestedFilter) => {
                 return Simplifier.simplifyFilter(nestedFilter);
             });
         }
+
+        // Attempt to resolve any collisions involved with the nested filters
+        filter = checkForNestedCollisions(filter);
 
         return filter;
     };
