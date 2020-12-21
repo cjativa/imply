@@ -18,7 +18,7 @@
               "--timeout",
               "999999",
               "--colors",
-              "${workspaceFolder}/test/basic.js"
+              "${workspaceFolder}/test/extra.js"
             ],
         }
     ]
