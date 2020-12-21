@@ -11,6 +11,9 @@
     "name": "Christopher D Jativa",
     "url": "https://jativa.me/"
   },
+  "scripts": {
+    "test": "mocha"
+  },
   "dependencies": {},
   "devDependencies": {
     "chai": "~3.5.0",
