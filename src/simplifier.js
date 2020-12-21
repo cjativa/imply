@@ -1,4 +1,4 @@
-const checkForNestedCollisions = require('./collision');
+const resolveNestedCollisions = require('./collision');
 
 /** Class responsible for simplfying a filter where logical and as much as possible.
  * Exposes one public method for simplifying the provided filter
@@ -17,16 +17,16 @@ class Simplifier {
         switch (filter.type) {
 
             case 'in':
-                simplifiedFilter = Simplifier.simplifyInFilter(filter);
+                simplifiedFilter = Simplifier.__simplifyInFilter(filter);
                 break;
 
 
             case 'and':
-                simplifiedFilter = Simplifier.simplifyAndFilter(filter);
+                simplifiedFilter = Simplifier.__simplifyAndFilter(filter);
                 break;
 
             case 'is':
-                simplifiedFilter = Simplifier.simplifyIsFilter(filter);
+                simplifiedFilter = Simplifier.__simplifyIsFilter(filter);
                 break;
         }
 
@@ -37,16 +37,9 @@ class Simplifier {
      * @param filter {object} - The filter
      * @returns filter {object} - The simplified filter
      */
-    static simplifyInFilter(filter) {
+    static __simplifyInFilter(filter) {
 
-        // Having no values matches none
-        if (filter.values.length == 0) {
-            return {
-                type: 'false'
-            }
-        }
-
-        // At this point, we have at least 1 value, let's filter out duplicates and empty values
+        // We need to have at least 1 "good" value, let's filter out duplicates and empty values
         filter.values = filter.values.reduce((acc, currentVal) => {
 
             // Check if the values list already has this value
@@ -59,6 +52,11 @@ class Simplifier {
 
             return acc;
         }, []);
+
+        // Having no values matches none
+        if (filter.values.length == 0) {
+            return { type: 'false' }
+        }
 
         // Having one value in the "values" list is essentially an "is" filter
         if (filter.values.length == 1) {
@@ -76,7 +74,15 @@ class Simplifier {
      * @param filter {object} - The filter
      * @returns filter {object} - The simplified filter
      */
-    static simplifyIsFilter(filter) {
+    static __simplifyIsFilter(filter) {
+
+        // Likely nothing should match an empty string
+        if (filter.value.trim() === '') {
+            return {
+                type: 'false'
+            }
+        }
+
         return filter;
     };
 
@@ -84,32 +90,32 @@ class Simplifier {
      * @param filter {object} - The filter
      * @returns filter {object} - The simplified filter
      */
-    static simplifyAndFilter(filter) {
+    static __simplifyAndFilter(filter) {
 
-        // Simply any filters where possible
+        // Flatten nested-filters where possible
         if (filter.hasOwnProperty('filters')) {
 
             // Flatten the nested sub-filters
-            const nestedAndFilters = filter.filters
+            filter.filters = filter.filters
                 .reduce((acc, val) => {
 
-                    if (val.type === 'and') {
-                        acc = [...acc, ...val.filters]
-                    }
+                    // Filters in a nested "and" have to be flattened
+                    if (val.type === 'and') { acc.push(...val.filters); }
+
+                    // Others can be added as-is
+                    else { acc.push(val); }
 
                     return acc;
                 }, [])
 
-            filter.filters = filter.filters.filter((fil) => fil.type !== 'and');
-            filter.filters = filter.filters.concat(nestedAndFilters);
-
+            // Simplify any filters as needed
             filter.filters = filter.filters.map((nestedFilter) => {
                 return Simplifier.simplifyFilter(nestedFilter);
             });
         }
 
         // Attempt to resolve any collisions involved with the nested filters
-        filter = checkForNestedCollisions(filter);
+        filter = resolveNestedCollisions(filter);
 
         return filter;
     };

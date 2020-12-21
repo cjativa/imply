@@ -9,9 +9,10 @@ const expectedFilterTypes = ['false', 'is', 'in', 'and'];
 */
 class Validator {
 
-    /** (Public method) Performs validation on the provided filter and returns information on the validity of it
+    /** (Public method) Performs validation on the provided filter. 
+     * Throws a MalformedFilterError when the provided filter is malformed
      * @param filter {any} - The filter to be validated
-     * @returns void
+     * @throws MalformedFilterError
      */
     static validateFilter(filter) {
 
@@ -20,12 +21,12 @@ class Validator {
 
         // Raise an error if the filter's not an object
         if (!filterIsObject) {
-            throw MalformedFilterError('Filter must be an object');
+            throw new MalformedFilterError('Filter must be an object');
         }
 
         // Even the most basic filter must provide "type"
         if (!filter.hasOwnProperty('type')) {
-            throw MalformedFilterError('Filter must include "type" parameter');
+            throw new MalformedFilterError('Filter must include "type" parameter');
         }
 
         // Ensure the filter type matches our expected filter types
@@ -33,7 +34,7 @@ class Validator {
 
         // Raise error if it's not an expected fitler type
         if (!filterTypeIsExpected) {
-            throw MalformedFilterError('Filter type must be one of "false", "is", "in", or "and"');
+            throw new MalformedFilterError('Filter type must be one of "false", "is", "in", or "and"');
         }
 
         // By this point, we can handle filter-type specific errors
@@ -54,22 +55,22 @@ class Validator {
 
             // "is" and "in" type filters both must provide the "attribute" field
             if (!filter.hasOwnProperty('attribute')) {
-                throw MalformedFilterError('Filters of type "is" or "in" must provide the "attribute" field');
+                throw new MalformedFilterError('Filters of type "is" or "in" must provide the "attribute" field');
             }
 
             // "is" type filter must provide the "value" field"
             if (filter.type === 'is' && !filter.hasOwnProperty('value')) {
-                throw MalformedFilterError('Filters of type "is" must provide the "value" field');
+                throw new MalformedFilterError('Filters of type "is" must provide the "value" field');
             }
 
             // "in" type filter must provide the "value" field"
             if (filter.type === 'in' && !filter.hasOwnProperty('values')) {
-                throw MalformedFilterError('Filters of type "in" must provide the "values" field');
+                throw new MalformedFilterError('Filters of type "in" must provide the "values" field');
             }
 
             // Values must be a list for the "in" filter
             if (filter.type === 'in' && !Array.isArray(filter.values)) {
-                throw MalformedFilterError('Filters of type "in" must provide the "values" field as a list');
+                throw new MalformedFilterError('Filters of type "in" must provide the "values" field as a list');
             }
         }
 
@@ -78,7 +79,7 @@ class Validator {
 
             // The "and" filter must provide sub-filters
             if (!filter.hasOwnProperty('filters') || filter.filters.length == 0) {
-                throw MalformedFilterError('Filters of type "and" must provide a non-empty list of sub-filters in the "filters" field');
+                throw new MalformedFilterError('Filters of type "and" must provide a non-empty list of sub-filters in the "filters" field');
             }
 
             // Run the whole validation process for each sub-filter
