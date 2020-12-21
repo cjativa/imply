@@ -1,7 +1,7 @@
 /** Custom error class for providing context on general malformed filter */
-class MalformedFilterError {
+class MalformedFilterError extends Error {
     constructor(detailedMessage) {
-        this.errorMessage = `Malformed filter error - ${detailedMessage}`;
+        super(`Malformed filter error - ${detailedMessage}`);
     }
 };
 
